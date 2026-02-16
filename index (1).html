@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>USA SwingTrading Dashboard - AI Pattern Analysis</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date@3.0.0/dist/chartjs-adapter-date.bundle.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-line me-2"></i>AI SwingTrading Dashboard
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#patterns">AI Patronen</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#journal">Trading Journal</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#screener">Screener</a>
+                    </li>
+                    <li class="nav-item">
+                        <div class="stock-input-group ms-3">
+                            <input type="text" class="form-control stock-input" id="quickStockInput" placeholder="AAPL" maxlength="5">
+                            <button class="btn btn-outline-light btn-sm" id="quickAnalyzeBtn">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Dashboard -->
+    <main class="main-content">
+        <div class="container-fluid">
+            <!-- Header Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="dashboard-header">
+                        <h1 class="display-6 mb-0">USA SwingTrading Dashboard</h1>
+                        <p class="text-muted mb-0">AI-gedreven patroonherkenning voor swingtrading</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Trading Score Card -->
+            <div class="row mb-4">
+                <div class="col-lg-4 col-md-6 mb-3">
+                    <div class="card ai-score-card">
+                        <div class="card-body text-center">
+                            <div class="ai-score-circle mx-auto mb-3">
+                                <span class="ai-score-value" id="aiScoreValue">85</span>
+                                <span class="ai-score-label">AI Score</span>
+                            </div>
+                            <h5 class="card-title">Huidige AI Analyse</h5>
+                            <p class="card-text">Sterk bullish signaal gedetecteerd</p>
+                            <div class="ai-score-indicators">
+                                <div class="indicator-item">
+                                    <span class="indicator-label">Trend</span>
+                                    <span class="indicator-value bullish">↑ 78%</span>
+                                </div>
+                                <div class="indicator-item">
+                                    <span class="indicator-label">Volume</span>
+                                    <span class="indicator-value bullish">↑ 65%</span>
+                                </div>
+                                <div class="indicator-item">
+                                    <span class="indicator-label">Momentum</span>
+                                    <span class="indicator-value bullish">↑ 82%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Market Overview -->
+                <div class="col-lg-8 col-md-6 mb-3">
+                    <div class="card market-overview-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Market Overview</h5>
+                            <div class="market-status">
+                                <span class="status-indicator"></span>
+                                <span class="status-text">Markt Open</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3 mb-3">
+                                    <div class="market-metric">
+                                        <div class="metric-label">S&P 500</div>
+                                        <div class="metric-value">4,567.89</div>
+                                        <div class="metric-change positive">+1.23%</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="market-metric">
+                                        <div class="metric-label">NASDAQ</div>
+                                        <div class="metric-value">14,234.56</div>
+                                        <div class="metric-change positive">+2.15%</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="market-metric">
+                                        <div class="metric-label">VIX</div>
+                                        <div class="metric-value">18.45</div>
+                                        <div class="metric-change negative">-5.67%</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <div class="market-metric">
+                                        <div class="metric-label">USD/EUR</div>
+                                        <div class="metric-value">0.9234</div>
+                                        <div class="metric-change positive">+0.45%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Pattern Analysis -->
+            <div class="row mb-4" id="patterns">
+                <div class="col-12">
+                    <div class="card pattern-analysis-card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-brain me-2"></i>AI Patroon Analyse
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-lg-8 mb-3">
+                                    <canvas id="patternChart" height="400"></canvas>
+                                </div>
+                                <div class="col-lg-4 mb-3">
+                                    <div class="pattern-list">
+                                        <h6>Detecteerde patronen</h6>
+                                        <div class="pattern-item" data-pattern="cup-handle">
+                                            <div class="pattern-icon">📈</div>
+                                            <div class="pattern-info">
+                                                <div class="pattern-name">Cup & Handle</div>
+                                                <div class="pattern-confidence">85% zekerheid</div>
+                                            </div>
+                                            <div class="pattern-signal bullish">BULLISH</div>
+                                        </div>
+                                        <div class="pattern-item" data-pattern="golden-cross">
+                                            <div class="pattern-icon">✨</div>
+                                            <div class="pattern-info">
+                                                <div class="pattern-name">Golden Cross</div>
+                                                <div class="pattern-confidence">78% zekerheid</div>
+                                            </div>
+                                            <div class="pattern-signal bullish">BULLISH</div>
+                                        </div>
+                                        <div class="pattern-item" data-pattern="rsi-divergence">
+                                            <div class="pattern-icon">📊</div>
+                                            <div class="pattern-info">
+                                                <div class="pattern-name">RSI Divergentie</div>
+                                                <div class="pattern-confidence">72% zekerheid</div>
+                                            </div>
+                                            <div class="pattern-signal bullish">BULLISH</div>
+                                        </div>
+                                        <div class="pattern-item" data-pattern="volume-spike">
+                                            <div class="pattern-icon">📊</div>
+                                            <div class="pattern-info">
+                                                <div class="pattern-name">Volume Spike</div>
+                                                <div class="pattern-confidence">69% zekerheid</div>
+                                            </div>
+                                            <div class="pattern-signal bullish">BULLISH</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Signals -->
+            <div class="row mb-4">
+                <div class="col-lg-6 mb-3">
+                    <div class="card signals-card">
+                        <div class="card-header">
+                            <h5 class="mb-0">AI Trading Signalen</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="signal-item">
+                                <div class="signal-header">
+                                    <span class="signal-symbol">AAPL</span>
+                                    <span class="signal-time">2 min geleden</span>
+                                </div>
+                                <div class="signal-content">
+                                    <div class="signal-action">KOPEN</div>
+                                    <div class="signal-price">$175.43</div>
+                                    <div class="signal-confidence">92%</div>
+                                </div>
+                                <div class="signal-analysis">
+                                    <small>Pattern: Ascending Triangle + Volume Confirmation</small>
+                                </div>
+                            </div>
+                            <div class="signal-item">
+                                <div class="signal-header">
+                                    <span class="signal-symbol">MSFT</span>
+                                    <span class="signal-time">5 min geleden</span>
+                                </div>
+                                <div class="signal-content">
+                                    <div class="signal-action">VERKOPEN</div>
+                                    <div class="signal-price">$378.92</div>
+                                    <div class="signal-confidence">87%</div>
+                                </div>
+                                <div class="signal-analysis">
+                                    <small>Pattern: Head & Shoulders + RSI Overbought</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Watchlist -->
+                <div class="col-lg-6 mb-3">
+                    <div class="card watchlist-card">
+                        <div class="card-header">
+                            <h5 class="mb-0">AI Watchlist</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="watchlist-item">
+                                <div class="watchlist-info">
+                                    <div class="symbol">TSLA</div>
+                                    <div class="name">Tesla Inc.</div>
+                                </div>
+                                <div class="watchlist-data">
+                                    <div class="price">$248.50</div>
+                                    <div class="change positive">+3.24%</div>
+                                </div>
+                                <div class="watchlist-ai">
+                                    <div class="ai-score">88</div>
+                                    <div class="ai-label">AI Score</div>
+                                </div>
+                            </div>
+                            <div class="watchlist-item">
+                                <div class="watchlist-info">
+                                    <div class="symbol">NVDA</div>
+                                    <div class="name">NVIDIA Corp.</div>
+                                </div>
+                                <div class="watchlist-data">
+                                    <div class="price">$456.78</div>
+                                    <div class="change negative">-1.87%</div>
+                                </div>
+                                <div class="watchlist-ai">
+                                    <div class="ai-score">75</div>
+                                    <div class="ai-label">AI Score</div>
+                                </div>
+                            </div>
+                            <div class="watchlist-item">
+                                <div class="watchlist-info">
+                                    <div class="symbol">AMD</div>
+                                    <div class="name">AMD Inc.</div>
+                                </div>
+                                <div class="watchlist-data">
+                                    <div class="price">$118.92</div>
+                                    <div class="change positive">+2.45%</div>
+                                </div>
+                                <div class="watchlist-ai">
+                                    <div class="ai-score">82</div>
+                                    <div class="ai-label">AI Score</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading Journal -->
+            <div class="row mb-4" id="journal">
+                <div class="col-12">
+                    <div class="card journal-card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="fas fa-book me-2"></i>Trading Journal
+                            </h5>
+                            <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addTradeModal">
+                                <i class="fas fa-plus me-1"></i>Trade Toevoegen
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="journal-stats mb-4">
+                                <div class="row">
+                                    <div class="col-md-3 mb-2">
+                                        <div class="stat-item">
+                                            <div class="stat-value text-success">68%</div>
+                                            <div class="stat-label">Win Rate</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <div class="stat-item">
+                                            <div class="stat-value">$12,450</div>
+                                            <div class="stat-label">Totale P&L</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <div class="stat-item">
+                                            <div class="stat-value">$234</div>
+                                            <div class="stat-label">Gem. Win</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <div class="stat-item">
+                                            <div class="stat-value">$156</div>
+                                            <div class="stat-label">Gem. Loss</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped table-hover" id="journalTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Datum</th>
+                                            <th>Symbool</th>
+                                            <th>Type</th>
+                                            <th>Entry</th>
+                                            <th>Exit</th>
+                                            <th>P&L</th>
+                                            <th>AI Score</th>
+                                            <th>Opmerkingen</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="journalTableBody">
+                                        <!-- Journal entries will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Analysis Tool -->
+            <div class="row mb-4" id="analyze">
+                <div class="col-12">
+                    <div class="card analysis-card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-search me-2"></i>Aandeel Analyse Tool
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="analysis-input mb-4">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Symbool of Ticker</label>
+                                        <input type="text" class="form-control" id="stockSymbol" placeholder="bijv. AAPL, MSFT, TSLA" value="AAPL">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">Analyse Periode</label>
+                                        <select class="form-select" id="analysisPeriod">
+                                            <option value="1mo">1 Maand</option>
+                                            <option value="3mo" selected>3 Maanden</option>
+                                            <option value="6mo">6 Maanden</option>
+                                            <option value="1y">1 Jaar</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button class="btn btn-primary w-100" id="analyzeBtn">
+                                            <i class="fas fa-chart-line me-2"></i>Analyseer
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="analysisResults" style="display: none;">
+                                <!-- Period Selector for 5-day analysis -->
+                                <div class="period-selector mb-4">
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-outline-light period-btn" data-period="5d">5 Dagen</button>
+                                        <button type="button" class="btn btn-outline-light period-btn" data-period="1wk">1 Week</button>
+                                        <button type="button" class="btn btn-outline-light period-btn" data-period="2wk">2 Weken</button>
+                                        <button type="button" class="btn btn-outline-light period-btn active" data-period="1mo">1 Maand</button>
+                                        <button type="button" class="btn btn-outline-light period-btn" data-period="3mo">3 Maanden</button>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-lg-8 mb-3">
+                                        <div class="analysis-chart">
+                                            <canvas id="analysisChart" height="400"></canvas>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-4 mb-3">
+                                        <div class="analysis-summary">
+                                            <h6>AI Analyse Samenvatting</h6>
+                                            <div id="analysisSummary">
+                                                <!-- Analysis summary will be populated by JavaScript -->
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="key-metrics mt-4">
+                                            <h6>Key Metrics</h6>
+                                            <div id="keyMetrics">
+                                                <!-- Key metrics will be populated by JavaScript -->
+                                            </div>
+                                        </div>
+
+                                        <div class="ai-score-display mt-4">
+                                            <h6>AI Score</h6>
+                                            <div class="ai-score-circle-small">
+                                                <span class="ai-score-value-small" id="smallAiScoreValue">85</span>
+                                                <span class="ai-score-label-small">AI Score</span>
+                                            </div>
+                                            <div class="score-breakdown mt-2" id="scoreBreakdown">
+                                                <!-- Score breakdown will be populated by JavaScript -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <div class="technical-indicators">
+                                            <h6>Technische Indicatoren</h6>
+                                            <div class="row" id="indicatorsRow">
+                                                <!-- Technical indicators will be populated by JavaScript -->
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Live Data Status -->
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <div class="live-data-status">
+                                            <div class="status-indicator"></div>
+                                            <span class="status-text">Live data - 15 min vertraging</span>
+                                            <span class="last-update" id="lastUpdate">Laatste update: --</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stock Screener -->
+            <div class="row mb-4" id="screener">
+                <div class="col-12">
+                    <div class="card screener-card">
+                        <div class="card-header">
+                            <h5 class="mb-0">
+                                <i class="fas fa-filter me-2"></i>AI Stock Screener
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="screener-filters mb-4">
+                                <div class="row">
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Marktkapitalisatie</label>
+                                        <select class="form-select" id="marketCapFilter">
+                                            <option value="">Alle</option>
+                                            <option value="large">Large Cap (>10B)</option>
+                                            <option value="mid">Mid Cap (2B-10B)</option>
+                                            <option value="small">Small Cap (<2B)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">AI Score</label>
+                                        <select class="form-select" id="aiScoreFilter">
+                                            <option value="">Alle</option>
+                                            <option value="80-100">80-100 (Sterk)</option>
+                                            <option value="60-79">60-79 (Gemiddeld)</option>
+                                            <option value="0-59">0-59 (Zwak)</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Sector</label>
+                                        <select class="form-select" id="sectorFilter">
+                                            <option value="">Alle sectoren</option>
+                                            <option value="tech">Technology</option>
+                                            <option value="healthcare">Healthcare</option>
+                                            <option value="finance">Finance</option>
+                                            <option value="energy">Energy</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Sorteer op</label>
+                                        <select class="form-select" id="sortBy">
+                                            <option value="aiScore">AI Score</option>
+                                            <option value="volume">Volume</option>
+                                            <option value="change">Verandering</option>
+                                            <option value="marketCap">Marktkapitalisatie</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-dark table-striped table-hover" id="screenerTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Symbool</th>
+                                            <th>Bedrijf</th>
+                                            <th>Sector</th>
+                                            <th>Prijs</th>
+                                            <th>Verandering</th>
+                                            <th>Volume</th>
+                                            <th>AI Score</th>
+                                            <th>Pattern</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="screenerTableBody">
+                                        <!-- Screener results will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add Trade Modal -->
+    <div class="modal fade" id="addTradeModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Trade Toevoegen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="tradeForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Datum</label>
+                                <input type="date" class="form-control" id="tradeDate" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Symbool</label>
+                                <input type="text" class="form-control" id="tradeSymbol" placeholder="bijv. AAPL" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Type</label>
+                                <select class="form-select" id="tradeType" required>
+                                    <option value="">Selecteer type</option>
+                                    <option value="Long">Long</option>
+                                    <option value="Short">Short</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Entry Prijs</label>
+                                <input type="number" class="form-control" id="tradeEntry" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Exit Prijs</label>
+                                <input type="number" class="form-control" id="tradeExit" step="0.01" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">AI Score</label>
+                                <input type="number" class="form-control" id="tradeAiScore" min="0" max="100" required>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Opmerkingen</label>
+                            <textarea class="form-control" id="tradeNotes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuleren</button>
+                    <button type="button" class="btn btn-primary" id="saveTrade">Opslaan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JavaScript -->
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
