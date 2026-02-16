@@ -21,8 +21,9 @@ class TradingDashboard {
     async getLiveStockData(symbol, period = '1d') {
         try {
             // Use Yahoo Finance API for real-time data
-            const response = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=5m&range=${period}`);
-            const data = await response.json();
+            url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval=5m&range={period}"
+response = requests.get(url)
+data = response.json()
             
             if (data.chart && data.chart.result && data.chart.result[0]) {
                 const result = data.chart.result[0];
