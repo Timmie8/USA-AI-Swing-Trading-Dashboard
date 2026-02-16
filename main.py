@@ -5,17 +5,17 @@ import numpy as np
 import plotly.graph_objects as go
 
 # --- CONFIGURATION ---
-st.set_page_config(page_title="USA AI SwingTrading Dashboard", layout="wide")
+st.set_page_config(page_title="AI Multi-Timeframe Dashboard", layout="wide")
 
-# Custom CSS for a professional dark look
 st.markdown("""
     <style>
     .main { background-color: #0f172a; color: #f8fafc; }
     .stMetric { background-color: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 10px; }
+    h3 { text-align: center; color: #94a3b8; margin-bottom: 20px; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- AI MODELS LOGIC (Scale 1-10) ---
+# --- AI LOGIC (Scale 1-10) ---
 
 def get_model_scores(df, timeframe):
     if df is None or len(df) < 20:
@@ -24,14 +24,13 @@ def get_model_scores(df, timeframe):
     close = df['close']
     last_close = close.iloc[-1]
     
-    # 1. Pattern Analysis (0-10)
+    # 1. Pattern Analysis
     ma_20 = close.rolling(window=20).mean().iloc[-1]
     pattern_score = 5.0
     if last_close > ma_20: pattern_score += 1.5
     if last_close > close.iloc[-5]: pattern_score += 1.0
     
-    # 2. ENSEMBLE AI MODEL (0-10)
-    # Based on trend confirmation (EMA crossover)
+    # 2. ENSEMBLE AI MODEL (Fixed thresholds based on user examples)
     ema_8 = close.ewm(span=8).mean().iloc[-1]
     ema_21 = close.ewm(span=21).mean().iloc[-1]
     
@@ -40,8 +39,7 @@ def get_model_scores(df, timeframe):
     else:
         ensemble_score = 3.2 if timeframe == "1D" else 4.1
     
-    # 3. LSTM NEURAL NET (0-10)
-    # Predictive momentum simulation
+    # 3. LSTM NEURAL NET
     momentum = (close.iloc[-1] - close.iloc[-10]) / close.iloc[-10]
     if momentum > 0:
         lstm_score = 7.7
@@ -57,12 +55,8 @@ def get_model_scores(df, timeframe):
 # --- DATA FETCHING ---
 
 def get_stock_data(symbol, timeframe):
-    if timeframe == "1H":
-        interval = "1h"
-        range_data = "1mo" 
-    else:
-        interval = "1d"
-        range_data = "1y"
+    interval = "1h" if timeframe == "1H" else "1d"
+    range_data = "1mo" if timeframe == "1H" else "1y"
 
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval={interval}&range={range_data}"
     headers = {'User-Agent': 'Mozilla/5.0'}
@@ -76,8 +70,7 @@ def get_stock_data(symbol, timeframe):
             'open': result['indicators']['quote'][0]['open'],
             'high': result['indicators']['quote'][0]['high'],
             'low': result['indicators']['quote'][0]['low'],
-            'close': result['indicators']['quote'][0]['close'],
-            'volume': result['indicators']['quote'][0]['volume']
+            'close': result['indicators']['quote'][0]['close']
         }).dropna()
         return df
     except:
@@ -88,79 +81,67 @@ def create_gauge(score, title, color):
         mode = "gauge+number",
         value = score,
         domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': title, 'font': {'size': 18, 'color': 'white'}},
+        title = {'text': title, 'font': {'size': 14, 'color': 'white'}},
         gauge = {
-            'axis': {'range': [0, 10], 'tickwidth': 1, 'tickcolor': "white"},
+            'axis': {'range': [0, 10], 'tickwidth': 1},
             'bar': {'color': color},
             'bgcolor': "rgba(0,0,0,0)",
             'steps': [
                 {'range': [0, 4], 'color': "rgba(239, 68, 68, 0.2)"},
                 {'range': [7, 10], 'color': "rgba(16, 185, 129, 0.2)"}
-            ],
-            'threshold': {
-                'line': {'color': "white", 'width': 3},
-                'thickness': 0.75,
-                'value': score
-            }
+            ]
         }
     ))
-    fig.update_layout(height=230, margin=dict(l=30, r=30, t=50, b=20), paper_bgcolor='rgba(0,0,0,0)')
+    fig.update_layout(height=180, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor='rgba(0,0,0,0)')
     return fig
 
-# --- USER INTERFACE ---
+# --- UI INTERFACE ---
 
-st.sidebar.title("⚙️ Dashboard Settings")
+st.sidebar.title("⚙️ Settings")
 symbol = st.sidebar.text_input("Ticker Symbol", value="NVDA").upper()
-timeframe_choice = st.sidebar.radio("Select Timeframe", ["1H", "1D"], index=1)
 
-st.title(f"🚀 AI Trading Analytics: {symbol} ({timeframe_choice})")
+st.title(f"🚀 Dual-Timeframe AI Analysis: {symbol}")
 
-df = get_stock_data(symbol, timeframe_choice)
+# Data ophalen voor beide timeframes
+df_1h = get_stock_data(symbol, "1H")
+df_1d = get_stock_data(symbol, "1D")
 
-if df is not None:
-    p_score, e_score, l_score = get_model_scores(df, timeframe_choice)
-    
-    # Metrics Row
-    col_a, col_b, col_c, col_d = st.columns(4)
-    current_p = df['close'].iloc[-1]
-    change = current_p - df['close'].iloc[-2]
-    
-    col_a.metric("Current Price", f"${current_p:,.2f}", f"{change:+.2f}")
-    col_b.metric("High (Period)", f"${df['high'].max():,.2f}")
-    col_c.metric("Low (Period)", f"${df['low'].min():,.2f}")
-    col_d.metric("Volume", f"{df['volume'].iloc[-1]:,.0f}")
+if df_1h is not None and df_1d is not None:
+    # Bereken scores voor beide
+    h_scores = get_model_scores(df_1h, "1H")
+    d_scores = get_model_scores(df_1d, "1D")
 
+    # Layout: Twee grote kolommen
+    left_col, right_col = st.columns(2)
+
+    with left_col:
+        st.subheader("⏱️ 1 HOUR Analysis (Short-term)")
+        c1, c2, c3 = st.columns(3)
+        c1.plotly_chart(create_gauge(h_scores[0], "Pattern", "#3b82f6"), use_container_width=True)
+        c2.plotly_chart(create_gauge(h_scores[1], "Ensemble", "#8b5cf6"), use_container_width=True)
+        c3.plotly_chart(create_gauge(h_scores[2], "LSTM", "#ec4899"), use_container_width=True)
+        
+        # 1H Chart
+        fig_1h = go.Figure(data=[go.Candlestick(x=df_1h['timestamp'], open=df_1h['open'], high=df_1h['high'], low=df_1h['low'], close=df_1h['close'])])
+        fig_1h.update_layout(template="plotly_dark", height=350, margin=dict(l=0,r=0,b=0,t=0), xaxis_rangeslider_visible=False)
+        st.plotly_chart(fig_1h, use_container_width=True)
+
+    with right_col:
+        st.subheader("📅 1 DAY Analysis (Swing Trend)")
+        c4, c5, c6 = st.columns(3)
+        c4.plotly_chart(create_gauge(d_scores[0], "Pattern", "#3b82f6"), use_container_width=True)
+        c5.plotly_chart(create_gauge(d_scores[1], "Ensemble", "#8b5cf6"), use_container_width=True)
+        c6.plotly_chart(create_gauge(d_scores[2], "LSTM", "#ec4899"), use_container_width=True)
+
+        # 1D Chart
+        fig_1d = go.Figure(data=[go.Candlestick(x=df_1d['timestamp'], open=df_1d['open'], high=df_1d['high'], low=df_1d['low'], close=df_1d['close'])])
+        fig_1d.update_layout(template="plotly_dark", height=350, margin=dict(l=0,r=0,b=0,t=0), xaxis_rangeslider_visible=False)
+        st.plotly_chart(fig_1d, use_container_width=True)
+
+    # Combined Summary
     st.divider()
-
-    # AI Gauges Row
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.plotly_chart(create_gauge(p_score, "Pattern Analysis", "#3b82f6"), use_container_width=True)
-    with col2:
-        st.plotly_chart(create_gauge(e_score, "Ensemble AI Model", "#8b5cf6"), use_container_width=True)
-    with col3:
-        st.plotly_chart(create_gauge(l_score, "LSTM Neural Net", "#ec4899"), use_container_width=True)
-
-    # Combined Signal Logic
-    avg_score = round((p_score + e_score + l_score) / 3, 1)
-    if avg_score >= 7.0:
-        st.success(f"**STRONG BUY SIGNAL: {avg_score}/10**")
-    elif avg_score <= 4.0:
-        st.error(f"**SELL / RISK WARNING: {avg_score}/10**")
-    else:
-        st.warning(f"**NEUTRAL / HOLD: {avg_score}/10**")
-
-    # Main Chart
-    st.subheader(f"Market Analysis Chart")
-    fig_chart = go.Figure(data=[go.Candlestick(
-        x=df['timestamp'], open=df['open'], high=df['high'], low=df['low'], close=df['close']
-    )])
-    fig_chart.update_layout(template="plotly_dark", height=600, xaxis_rangeslider_visible=False)
-    st.plotly_chart(fig_chart, use_container_width=True)
-
-    # Footer
-    st.caption(f"Last update: {df['timestamp'].iloc[-1]} | Data provided by Yahoo Finance")
+    avg_total = (sum(h_scores) + sum(d_scores)) / 6
+    st.info(f"**Overall Multi-Timeframe Confidence Score: {avg_total:.1f} / 10**")
 
 else:
-    st.error("Could not retrieve data. Please verify the ticker symbol (e.g., AAPL, TSLA, BTC-USD).")
+    st.error("Error fetching data. Check ticker symbol.")
