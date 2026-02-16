@@ -7,6 +7,18 @@ import plotly.graph_objects as go
 # --- CONFIGURATION ---
 st.set_page_config(page_title="AI Multi-Timeframe Dashboard", layout="wide")
 
+# Custom CSS voor styling en kleuren
+st.markdown("""
+    <style>
+    .main { background-color: #0f172a; color: #f8fafc; }
+    .stMetric { background-color: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 10px; }
+    .status-box { padding: 10px; border-radius: 5px; text-align: center; font-weight: bold; margin-bottom: 20px; }
+    .buy { background-color: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; }
+    .neutral { background-color: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid #f59e0b; }
+    .sell { background-color: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+    </style>
+    """, unsafe_allow_html=True)
+
 # --- AI LOGIC (Scale 1-10) ---
 
 def get_model_scores(df, timeframe):
@@ -63,12 +75,11 @@ def get_stock_data(symbol, timeframe):
         return None
 
 def create_gauge(score, title, color, timeframe_id):
-    # Added timeframe_id to the title to ensure the Figure ID is unique
     fig = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = score,
         domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': f"{title} ({timeframe_id})", 'font': {'size': 14, 'color': 'white'}},
+        title = {'text': f"{title}", 'font': {'size': 14, 'color': 'white'}},
         gauge = {
             'axis': {'range': [0, 10]},
             'bar': {'color': color},
@@ -79,52 +90,82 @@ def create_gauge(score, title, color, timeframe_id):
             ]
         }
     ))
-    fig.update_layout(height=180, margin=dict(l=20, r=20, t=40, b=20), paper_bgcolor='rgba(0,0,0,0)')
+    fig.update_layout(height=160, margin=dict(l=20, r=20, t=40, b=10), paper_bgcolor='rgba(0,0,0,0)')
     return fig
 
 # --- UI INTERFACE ---
 
-st.sidebar.title("⚙️ Settings")
+st.sidebar.title("⚙️ Dashboard Settings")
 symbol = st.sidebar.text_input("Ticker Symbol", value="NVDA").upper()
 
-st.title(f"🚀 Dual-Timeframe AI Analysis: {symbol}")
+st.title(f"🚀 Dual-Timeframe Analysis: {symbol}")
 
 df_1h = get_stock_data(symbol, "1H")
 df_1d = get_stock_data(symbol, "1D")
 
 if df_1h is not None and df_1d is not None:
+    # Bereken scores
     h_scores = get_model_scores(df_1h, "1H")
     d_scores = get_model_scores(df_1d, "1D")
+    
+    avg_1h = sum(h_scores) / 3
+    avg_1d = sum(d_scores) / 3
 
-    left_col, right_col = st.columns(2)
+    # HOOFD LAYOUT: Kolommen voor 1H en 1D
+    col_1h, col_1d = st.columns(2)
 
-    with left_col:
+    # --- 1 UUR SECTIE ---
+    with col_1h:
         st.subheader("⏱️ 1 HOUR Analysis")
-        c1, c2, c3 = st.columns(3)
-        # Pass "1H" as a unique ID to the gauge function
-        c1.plotly_chart(create_gauge(h_scores[0], "Pattern", "#3b82f6", "1H"), use_container_width=True, key="gauge_p_1h")
-        c2.plotly_chart(create_gauge(h_scores[1], "Ensemble", "#8b5cf6", "1H"), use_container_width=True, key="gauge_e_1h")
-        c3.plotly_chart(create_gauge(h_scores[2], "LSTM", "#ec4899", "1H"), use_container_width=True, key="gauge_l_1h")
+        # Status kleur box
+        h_class = "buy" if avg_1h >= 7 else ("neutral" if avg_1h >= 4.5 else "sell")
+        st.markdown(f'<div class="status-box {h_class}">1H SIGNAL: {"BUY" if avg_1h >= 7 else ("NEUTRAL" if avg_1h >= 4.5 else "SELL")} ({round(avg_1h,1)}/10)</div>', unsafe_allow_html=True)
         
-        fig_1h = go.Figure(data=[go.Candlestick(x=df_1h['timestamp'], open=df_1h['open'], high=df_1h['high'], low=df_1h['low'], close=df_1h['close'])])
-        fig_1h.update_layout(template="plotly_dark", height=350, margin=dict(l=0,r=0,b=0,t=0), xaxis_rangeslider_visible=False)
-        st.plotly_chart(fig_1h, use_container_width=True, key="chart_1h")
+        c1, c2, c3 = st.columns(3)
+        c1.plotly_chart(create_gauge(h_scores[0], "Pattern", "#3b82f6", "1H"), use_container_width=True, key="p1h")
+        c2.plotly_chart(create_gauge(h_scores[1], "Ensemble", "#8b5cf6", "1H"), use_container_width=True, key="e1h")
+        c3.plotly_chart(create_gauge(h_scores[2], "LSTM", "#ec4899", "1H"), use_container_width=True, key="l1h")
 
-    with right_col:
+    # --- 1 DAG SECTIE ---
+    with col_1d:
         st.subheader("📅 1 DAY Analysis")
+        # Status kleur box
+        d_class = "buy" if avg_1d >= 7 else ("neutral" if avg_1d >= 4.5 else "sell")
+        st.markdown(f'<div class="status-box {d_class}">1D SIGNAL: {"BUY" if avg_1d >= 7 else ("NEUTRAL" if avg_1d >= 4.5 else "SELL")} ({round(avg_1d,1)}/10)</div>', unsafe_allow_html=True)
+        
         c4, c5, c6 = st.columns(3)
-        # Pass "1D" as a unique ID to the gauge function
-        c4.plotly_chart(create_gauge(d_scores[0], "Pattern", "#3b82f6", "1D"), use_container_width=True, key="gauge_p_1d")
-        c5.plotly_chart(create_gauge(d_scores[1], "Ensemble", "#8b5cf6", "1D"), use_container_width=True, key="gauge_e_1d")
-        c6.plotly_chart(create_gauge(d_scores[2], "LSTM", "#ec4899", "1D"), use_container_width=True, key="gauge_l_1d")
+        c4.plotly_chart(create_gauge(d_scores[0], "Pattern", "#3b82f6", "1D"), use_container_width=True, key="p1d")
+        c5.plotly_chart(create_gauge(d_scores[1], "Ensemble", "#8b5cf6", "1D"), use_container_width=True, key="e1d")
+        c6.plotly_chart(create_gauge(d_scores[2], "LSTM", "#ec4899", "1D"), use_container_width=True, key="l1d")
 
-        fig_1d = go.Figure(data=[go.Candlestick(x=df_1d['timestamp'], open=df_1d['open'], high=df_1d['high'], low=df_1d['low'], close=df_1d['close'])])
-        fig_1d.update_layout(template="plotly_dark", height=350, margin=dict(l=0,r=0,b=0,t=0), xaxis_rangeslider_visible=False)
-        st.plotly_chart(fig_1d, use_container_width=True, key="chart_1d")
-
+    # --- TOTAAL SCORE SECTIE ---
     st.divider()
-    avg_total = (sum(h_scores) + sum(d_scores)) / 6
-    st.info(f"**Overall Multi-Timeframe Confidence Score: {avg_total:.1f} / 10**")
+    total_avg = (avg_1h + avg_1d) / 2
+    
+    t_col1, t_col2 = st.columns([1, 2])
+    with t_col1:
+        st.markdown("### 🏆 Total AI Confidence")
+        st.metric(label="Overall Score", value=f"{round(total_avg, 1)} / 10", delta=f"{round(total_avg - 5.0, 1)} vs Neutral")
+    
+    with t_col2:
+        if total_avg >= 7.0:
+            st.success("**CONFLUENCE DETECTED:** Both timeframes show strong momentum. Probability of success is high.")
+        elif total_avg >= 5.0:
+            st.warning("**MIXED SIGNALS:** Proceed with caution. Look for additional confirmation on the charts.")
+        else:
+            st.error("**BEARISH BIAS:** AI models suggest high risk. Avoid long entries.")
+
+    # Grafieken onderaan
+    st.subheader("Charts Comparison")
+    chart_col1, chart_col2 = st.columns(2)
+    with chart_col1:
+        fig_1h = go.Figure(data=[go.Candlestick(x=df_1h['timestamp'], open=df_1h['open'], high=df_1h['high'], low=df_1h['low'], close=df_1h['close'])])
+        fig_1h.update_layout(template="plotly_dark", height=300, margin=dict(l=0,r=0,b=0,t=0), xaxis_rangeslider_visible=False)
+        st.plotly_chart(fig_1h, use_container_width=True, key="c1h")
+    with chart_col2:
+        fig_1d = go.Figure(data=[go.Candlestick(x=df_1d['timestamp'], open=df_1d['open'], high=df_1d['high'], low=df_1d['low'], close=df_1d['close'])])
+        fig_1d.update_layout(template="plotly_dark", height=300, margin=dict(l=0,r=0,b=0,t=0), xaxis_rangeslider_visible=False)
+        st.plotly_chart(fig_1d, use_container_width=True, key="c1d")
 
 else:
     st.error("Error fetching data. Check ticker symbol.")
