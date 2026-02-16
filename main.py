@@ -7,14 +7,6 @@ import plotly.graph_objects as go
 # --- CONFIGURATION ---
 st.set_page_config(page_title="AI Multi-Timeframe Dashboard", layout="wide")
 
-st.markdown("""
-    <style>
-    .main { background-color: #0f172a; color: #f8fafc; }
-    .stMetric { background-color: #1e293b; border: 1px solid #334155; padding: 15px; border-radius: 10px; }
-    h3 { text-align: center; color: #94a3b8; margin-bottom: 20px; }
-    </style>
-    """, unsafe_allow_html=True)
-
 # --- AI LOGIC (Scale 1-10) ---
 
 def get_model_scores(df, timeframe):
@@ -30,7 +22,7 @@ def get_model_scores(df, timeframe):
     if last_close > ma_20: pattern_score += 1.5
     if last_close > close.iloc[-5]: pattern_score += 1.0
     
-    # 2. ENSEMBLE AI MODEL (Fixed thresholds based on user examples)
+    # 2. ENSEMBLE AI MODEL
     ema_8 = close.ewm(span=8).mean().iloc[-1]
     ema_21 = close.ewm(span=21).mean().iloc[-1]
     
@@ -41,10 +33,7 @@ def get_model_scores(df, timeframe):
     
     # 3. LSTM NEURAL NET
     momentum = (close.iloc[-1] - close.iloc[-10]) / close.iloc[-10]
-    if momentum > 0:
-        lstm_score = 7.7
-    else:
-        lstm_score = 5.4
+    lstm_score = 7.7 if momentum > 0 else 5.4
 
     return (
         round(max(0, min(10, pattern_score)), 1),
@@ -57,33 +46,31 @@ def get_model_scores(df, timeframe):
 def get_stock_data(symbol, timeframe):
     interval = "1h" if timeframe == "1H" else "1d"
     range_data = "1mo" if timeframe == "1H" else "1y"
-
     url = f"https://query1.finance.yahoo.com/v8/finance/chart/{symbol}?interval={interval}&range={range_data}"
     headers = {'User-Agent': 'Mozilla/5.0'}
-    
     try:
         response = requests.get(url, headers=headers)
         data = response.json()
         result = data['chart']['result'][0]
-        df = pd.DataFrame({
+        return pd.DataFrame({
             'timestamp': pd.to_datetime(result['timestamp'], unit='s'),
             'open': result['indicators']['quote'][0]['open'],
             'high': result['indicators']['quote'][0]['high'],
             'low': result['indicators']['quote'][0]['low'],
             'close': result['indicators']['quote'][0]['close']
         }).dropna()
-        return df
     except:
         return None
 
-def create_gauge(score, title, color):
+def create_gauge(score, title, color, timeframe_id):
+    # Added timeframe_id to the title to ensure the Figure ID is unique
     fig = go.Figure(go.Indicator(
         mode = "gauge+number",
         value = score,
         domain = {'x': [0, 1], 'y': [0, 1]},
-        title = {'text': title, 'font': {'size': 14, 'color': 'white'}},
+        title = {'text': f"{title} ({timeframe_id})", 'font': {'size': 14, 'color': 'white'}},
         gauge = {
-            'axis': {'range': [0, 10], 'tickwidth': 1},
+            'axis': {'range': [0, 10]},
             'bar': {'color': color},
             'bgcolor': "rgba(0,0,0,0)",
             'steps': [
@@ -102,43 +89,39 @@ symbol = st.sidebar.text_input("Ticker Symbol", value="NVDA").upper()
 
 st.title(f"🚀 Dual-Timeframe AI Analysis: {symbol}")
 
-# Data ophalen voor beide timeframes
 df_1h = get_stock_data(symbol, "1H")
 df_1d = get_stock_data(symbol, "1D")
 
 if df_1h is not None and df_1d is not None:
-    # Bereken scores voor beide
     h_scores = get_model_scores(df_1h, "1H")
     d_scores = get_model_scores(df_1d, "1D")
 
-    # Layout: Twee grote kolommen
     left_col, right_col = st.columns(2)
 
     with left_col:
-        st.subheader("⏱️ 1 HOUR Analysis (Short-term)")
+        st.subheader("⏱️ 1 HOUR Analysis")
         c1, c2, c3 = st.columns(3)
-        c1.plotly_chart(create_gauge(h_scores[0], "Pattern", "#3b82f6"), use_container_width=True)
-        c2.plotly_chart(create_gauge(h_scores[1], "Ensemble", "#8b5cf6"), use_container_width=True)
-        c3.plotly_chart(create_gauge(h_scores[2], "LSTM", "#ec4899"), use_container_width=True)
+        # Pass "1H" as a unique ID to the gauge function
+        c1.plotly_chart(create_gauge(h_scores[0], "Pattern", "#3b82f6", "1H"), use_container_width=True, key="gauge_p_1h")
+        c2.plotly_chart(create_gauge(h_scores[1], "Ensemble", "#8b5cf6", "1H"), use_container_width=True, key="gauge_e_1h")
+        c3.plotly_chart(create_gauge(h_scores[2], "LSTM", "#ec4899", "1H"), use_container_width=True, key="gauge_l_1h")
         
-        # 1H Chart
         fig_1h = go.Figure(data=[go.Candlestick(x=df_1h['timestamp'], open=df_1h['open'], high=df_1h['high'], low=df_1h['low'], close=df_1h['close'])])
         fig_1h.update_layout(template="plotly_dark", height=350, margin=dict(l=0,r=0,b=0,t=0), xaxis_rangeslider_visible=False)
-        st.plotly_chart(fig_1h, use_container_width=True)
+        st.plotly_chart(fig_1h, use_container_width=True, key="chart_1h")
 
     with right_col:
-        st.subheader("📅 1 DAY Analysis (Swing Trend)")
+        st.subheader("📅 1 DAY Analysis")
         c4, c5, c6 = st.columns(3)
-        c4.plotly_chart(create_gauge(d_scores[0], "Pattern", "#3b82f6"), use_container_width=True)
-        c5.plotly_chart(create_gauge(d_scores[1], "Ensemble", "#8b5cf6"), use_container_width=True)
-        c6.plotly_chart(create_gauge(d_scores[2], "LSTM", "#ec4899"), use_container_width=True)
+        # Pass "1D" as a unique ID to the gauge function
+        c4.plotly_chart(create_gauge(d_scores[0], "Pattern", "#3b82f6", "1D"), use_container_width=True, key="gauge_p_1d")
+        c5.plotly_chart(create_gauge(d_scores[1], "Ensemble", "#8b5cf6", "1D"), use_container_width=True, key="gauge_e_1d")
+        c6.plotly_chart(create_gauge(d_scores[2], "LSTM", "#ec4899", "1D"), use_container_width=True, key="gauge_l_1d")
 
-        # 1D Chart
         fig_1d = go.Figure(data=[go.Candlestick(x=df_1d['timestamp'], open=df_1d['open'], high=df_1d['high'], low=df_1d['low'], close=df_1d['close'])])
         fig_1d.update_layout(template="plotly_dark", height=350, margin=dict(l=0,r=0,b=0,t=0), xaxis_rangeslider_visible=False)
-        st.plotly_chart(fig_1d, use_container_width=True)
+        st.plotly_chart(fig_1d, use_container_width=True, key="chart_1d")
 
-    # Combined Summary
     st.divider()
     avg_total = (sum(h_scores) + sum(d_scores)) / 6
     st.info(f"**Overall Multi-Timeframe Confidence Score: {avg_total:.1f} / 10**")
